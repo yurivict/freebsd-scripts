@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# -s for mdconfig is in 512 byte sectors, round up to 8X
+
+##
+## Arguments
+##
+# size is in bytes
+SIZE=$((($1/512+7)/8*8))
+# unit is a number that wull be used in /dev/mdNN
+UNIT=$2
+# directory to create
+DIR=$3
+# (optional) number of inodes
+INODES=$4
+
+if [ -z "${1}" -o -z "${UNIT}" -o -z "${DIR}" ]; then
+  echo "Usage: $0 size unit dir {inodes}"
+  exit 1
+fi
+
+if [ -n "$INODES" ]; then
+  opt_inodes="-i $INODES"
+fi
+
+##
+## MAIN
+##
+(
+  mkdir "$DIR" &&
+  mdconfig -a -t swap -s "$SIZE" -u $UNIT &&
+  newfs -U "md$UNIT" $opt_inodes &&
+  mount "/dev/md$UNIT" "$DIR" &&
+  echo "Memory disk created successfully (unit=$UNIT SIZE=$SIZE sec DIR=$DIR)"
+) || (
+  # cleanup
+  rmdir "$DIR" &&
+  mdconfig -d -u $UNIT
+) > /dev/null 2>&1
+
+#mdconfig -a -t swap -s "$SIZE" -u "$UNIT"

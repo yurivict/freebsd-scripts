@@ -1,0 +1,24 @@
+#!/bin/sh
+
+
+##
+## Arguments MUST match with how create-memory-disk was called
+##
+# unit is a number that wull be used in /dev/mdNN
+UNIT=$1
+# directory where it was mounted
+DIR=$2
+
+if [ -z "${UNIT}" -o -z "${DIR}" ]; then
+  echo "Usage: $0 unit dir"
+  exit 1
+fi
+
+##
+## MAIN
+##
+
+umount -f "$DIR" && \
+mdconfig -d -u "$UNIT" && \
+rm -rf "$DIR" \
+echo "Memory disk destroyed successfully"
